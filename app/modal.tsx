@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, Platform, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { useColorScheme } from '@/components/useColorScheme';
 
 import { useProductsQuery } from '@/api';
 import { ImagePayload, useAddProductMutation } from '@/api/useAddProductMutation';
@@ -12,6 +13,7 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ModalScreen() {
+  const theme = useColorScheme() ?? 'light';
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [expiredAt, setExpiredAt] = useState('');
@@ -91,14 +93,16 @@ export default function ModalScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Add new product</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, theme === 'dark' && { color: '#fff', borderColor: '#444' }]}
         placeholder="Product Name"
+        placeholderTextColor={theme === 'dark' ? '#888' : '#888'}
         value={name}
         onChangeText={setName}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, theme === 'dark' && { color: '#fff', borderColor: '#444' }]}
         placeholder="Description"
+        placeholderTextColor={theme === 'dark' ? '#888' : '#888'}
         value={description}
         onChangeText={setDescription}
       />

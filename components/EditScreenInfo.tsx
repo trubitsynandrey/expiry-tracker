@@ -44,6 +44,18 @@ export default function EditScreenInfo({ path }: { path: string }) {
     return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
   }
 
+  if (Array.isArray(data) && data.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Image
+          source={require('@/assets/images/splash-icon.png')}
+          style={styles.emptyThumbnail}
+        />
+        <Text style={styles.emptyText}>No products found</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView>
       <View style={styles.getStartedContainer}>
@@ -80,6 +92,23 @@ export default function EditScreenInfo({ path }: { path: string }) {
 }
 
 const styles = StyleSheet.create({
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    },
+    emptyThumbnail: {
+      width: 120,
+      height: 120,
+      marginBottom: 20,
+      resizeMode: 'contain',
+    },
+    emptyText: {
+      fontSize: 18,
+      color: '#888',
+      textAlign: 'center',
+    },
   getStartedContainer: {
     marginHorizontal: 20,
     marginTop: 20,
@@ -103,7 +132,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 180,
+    height: 100,
     borderRadius: 8,
     marginTop: 10,
     marginBottom: 10,

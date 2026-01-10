@@ -1,44 +1,44 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 
 
 const deleteProduct = async (id: string): Promise<void> => {
-  // First, delete the image(s) from the bucket
+  // 1. Delete images from storage
   const { data: listData, error: listError } = await supabase.storage
     .from('product-images')
-    .list(id + '/');
+    .list(`${id}/`);
 
-  if (listError) {
-    console.error('Error listing images for deletion:', listError);
-    // Continue to try deleting the product anyway
-  } else if (listData && listData.length > 0) {
-    // Delete all files under the product's folder
-    const filePaths = listData.map((file: any) => `${id}/${file.name}`);
-    const { error: deleteImgError } = await supabase.storage
+  if (!listError && listData?.length) {
+    const filePaths = listData.map(file => `${id}/${file.name}`);
+    await supabase.storage
       .from('product-images')
       .remove(filePaths);
-    if (deleteImgError) {
-      console.error('Error deleting image(s) from bucket:', deleteImgError);
-    }
   }
 
-  // Then, delete the product from the table
+  // 2. Delete product row
   const { error } = await supabase
     .from('Product')
     .delete()
     .eq('id', id);
 
   if (error) {
-    throw new Error(`Error deleting product: ${error.message}`);
+    throw new Error(error.message);
   }
 };
 
 export const useDeleteProductMutation = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: deleteProduct,
-    onSuccess: () => {
-    },
-    onError: (error) => {
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData(['products'], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.filter((product: any) => product.id !== id),
+        };
+      });
     },
   });
 };
