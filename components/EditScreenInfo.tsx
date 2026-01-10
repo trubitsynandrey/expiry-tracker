@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons';
 import { differenceInDays, format } from 'date-fns';
 import React from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Image } from 'react-native';
 
 import { Text, View } from './Themed';
 
@@ -58,6 +58,13 @@ export default function EditScreenInfo({ path }: { path: string }) {
                 onPress={() => handleDelete(product.id)}
               />
             </View>
+            {product.image_url ? (
+              <Image
+                source={{ uri: product.image_url }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+            ) : null}
             <Text style={styles.productDescription}>{product.description}</Text>
             <Text style={styles.productDate}>Created: {format(new Date(product.created_at), 'dd/MM/yyyy')}</Text>
             <Text
@@ -93,6 +100,14 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  productImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: '#eee',
   },
   productDescription: {
     fontSize: 14,

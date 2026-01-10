@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Alert, Platform, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
 import { useProductsQuery } from '@/api';
-import { useAddProductMutation } from '@/api/useAddProductMutation';
+import { ImagePayload, useAddProductMutation } from '@/api/useAddProductMutation';
 import { Text, View } from '@/components/Themed';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import React from 'react';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,28 +15,30 @@ export default function ModalScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [expiredAt, setExpiredAt] = useState('');
+  const [imageFile, setImageFile] = useState<ImagePayload | null>(null);
 
   const { refetch } = useProductsQuery();
   const { mutate: addProduct } = useAddProductMutation();
 
   const handleAddProduct = () => {
-    if (!name || !description || !expiredAt) {
+    if (!name || !description || !expiredAt || !imageFile) {
       Alert.alert('Error', 'All fields are required.');
       return;
     }
 
     addProduct(
-      { id: uuidv4(), name, description, expired_at: expiredAt },
+      { id: uuidv4(), name, description, expired_at: expiredAt, imageFile },
       {
         onSuccess: () => {
           Alert.alert('Success', 'Product added successfully!');
           setName('');
           setDescription('');
           setExpiredAt('');
+          setImageFile(null);
           refetch();
         },
-        onError: () => {
-          Alert.alert('Error', 'Failed to add product.');
+        onError: (error) => {
+          Alert.alert('Error', 'Failed to add product.' + error.message,);
         },
       }
     );
@@ -45,6 +49,43 @@ export default function ModalScreen() {
       setExpiredAt(selected.toISOString());
     }
   };
+
+  // const pickImage = async () => {
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     quality: 1,
+  //   });
+
+  //   if (!result.canceled) {
+  //     const response = await fetch(result.assets[0].uri);
+  //     const blob = await response.blob();
+  //     const file = new File([blob], 'image.jpg', { type: blob.type });
+  //     setImageFile(file);
+  //   }
+  // };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const asset = result.assets[0];
+
+      const response = await fetch(asset.uri);
+      const arrayBuffer = await response.arrayBuffer();
+
+      setImageFile({
+        buffer: arrayBuffer,
+        name: asset.fileName ?? 'image.jpg',
+        type: asset.mimeType ?? 'image/jpeg',
+      });
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -61,20 +102,19 @@ export default function ModalScreen() {
         value={description}
         onChangeText={setDescription}
       />
-      {/* <Button title="Select Expiry Date" onPress={() => setShowDatePicker(true)} /> */}
-      {/* {showDatePicker && ( */}
       <DateTimePicker
         value={expiredAt ? new Date(expiredAt) : new Date()}
         mode="date"
         display="default"
         onChange={handleDateChange}
       />
-      {/* )} */}
+      <TouchableOpacity onPress={pickImage} style={styles.submitButton}>
+        <Text>Pick an Image</Text>
+      </TouchableOpacity>
+      {imageFile && <Text>Selected Image: {imageFile.name}</Text>}
       <TouchableOpacity onPress={handleAddProduct} style={styles.submitButton}>
         <Text>Add Product</Text>
       </TouchableOpacity>
-      {/* <Text style={styles.input}>Selected Date: {expiredAt ? new Date(expiredAt).toLocaleDateString() : 'None'}</Text> */}
-      {/* <Button title="Add Product" onPress={handleAddProduct} style={styles.submitButton} /> */}
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );

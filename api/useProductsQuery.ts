@@ -7,6 +7,7 @@ interface Product {
   description: string;
   created_at: string;
   expired_at: string;
+  image_url?: string;
 }
 
 async function fetchAllProducts(): Promise<Product[] | null> {
