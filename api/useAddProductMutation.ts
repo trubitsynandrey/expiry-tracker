@@ -12,7 +12,7 @@ interface NewProduct {
   name: string;
   description: string;
   expired_at: string;
-  imageFile?: ImagePayload; // Added optional image file
+  imageFile?: ImagePayload;
 }
 
 async function uploadImageToBucket(

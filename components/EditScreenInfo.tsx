@@ -1,7 +1,7 @@
 import { Entypo } from '@expo/vector-icons';
 import { differenceInDays, format } from 'date-fns';
-import React from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, View } from './Themed';
 
@@ -22,9 +22,10 @@ const getExpiryText = (daysLeft: number) => {
 
 export default function EditScreenInfo({ path }: { path: string }) {
   const { data, isLoading, refetch } = useProductsQuery(true);
-  const { mutate: deleteProductById } = useDeleteProductMutation();
+  const { mutate: deleteProductById, isPending: isDeletionInProgress } = useDeleteProductMutation();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     Alert.alert(
       'Confirm Delete',
       'Are you sure you want to delete this item?',
@@ -32,8 +33,13 @@ export default function EditScreenInfo({ path }: { path: string }) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete', style: 'destructive', onPress: async () => {
-            await deleteProductById(id)
-            await refetch()
+            setDeletingId(id);
+            try {
+              await deleteProductById(id);
+              await refetch();
+            } finally {
+              setDeletingId(null);
+            }
           }
         },
       ]
@@ -59,8 +65,10 @@ export default function EditScreenInfo({ path }: { path: string }) {
   return (
     <ScrollView>
       <View style={styles.getStartedContainer}>
-        {data?.map((product) => (
-          <View key={product.id} style={styles.productContainer}>
+        {data?.map((product) => {
+          const isItemDeleting = deletingId === product.id && isDeletionInProgress
+          return (
+          <View key={product.id} style={[styles.productContainer, isItemDeleting&& styles.productDeleting]}>
             <View style={styles.productHeader}>
               <Text style={styles.productName}>{product.name}</Text>
               <Entypo
@@ -68,6 +76,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
                 size={24}
                 color="#FF7F7F"
                 onPress={() => handleDelete(product.id)}
+                disabled={isItemDeleting}
               />
             </View>
             {product.image_url ? (
@@ -85,30 +94,30 @@ export default function EditScreenInfo({ path }: { path: string }) {
               {getExpiryText(differenceInDays(new Date(product.expired_at), new Date()))}
             </Text>
           </View>
-        ))}
+        )})}
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
-    },
-    emptyThumbnail: {
-      width: 120,
-      height: 120,
-      marginBottom: 20,
-      resizeMode: 'contain',
-    },
-    emptyText: {
-      fontSize: 18,
-      color: '#888',
-      textAlign: 'center',
-    },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+  },
+  emptyThumbnail: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+    resizeMode: 'contain',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+  },
   getStartedContainer: {
     marginHorizontal: 20,
     marginTop: 20,
@@ -146,6 +155,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     marginTop: 5,
+  },
+  productDeleting: {
+    opacity: 0.5,
   },
   homeScreenFilename: {
     marginVertical: 7,

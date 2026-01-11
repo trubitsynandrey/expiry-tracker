@@ -28,16 +28,13 @@ const deleteProduct = async (id: string): Promise<void> => {
 
 export const useDeleteProductMutation = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteProduct,
     onSuccess: (_data, id) => {
-      queryClient.setQueryData(['products'], (old: any) => {
-        if (!old?.data) return old;
-        return {
-          ...old,
-          data: old.data.filter((product: any) => product.id !== id),
-        };
+      queryClient.setQueryData(['products'], (old: any[]) => {
+        if (!old) return old;
+        return [...old.filter((product: any) => product.id !== id)]
       });
     },
   });
